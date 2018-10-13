@@ -14,7 +14,7 @@ CFLAGS = -Wall -O0
 LDFLAGS = -lm
 
 ### MY FLAG: name of time output file
-OUTFILE = 2_loop_invariant_O0.txt
+OUTFILE = 3_loop_unrolling_O0.txt
 
 # make all will create all executables
 all: $(EXECUTABLES)

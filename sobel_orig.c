@@ -42,15 +42,32 @@ unsigned char input[SIZE*SIZE], output[SIZE*SIZE], golden[SIZE*SIZE];
  * pixel we process.														  */
 int convolution2D(int posy, int posx, const unsigned char *input, char operator[][3]) {
   int temp_1Darray_row;
-  int i, j, res;
+  int i, /*j,*/ res;
 
-	res = 0;
-  for (i = -1; i <= 1; i++) {
-	   temp_1Darray_row = (posy + i)*SIZE + posx;
-     for (j = -1; j <= 1; j++) {
-			res += input[temp_1Darray_row + j] * operator[i+1][j+1];
-		}
-	}
+	// res = 0;
+  // for (i = -1; i <= 1; i++) {
+	//    temp_1Darray_row = (posy + i)*SIZE + posx;
+  //    for (j = -1; j <= 1; j++) {
+	// 		res += input[temp_1Darray_row + j] * operator[i+1][j+1];
+	// 	}
+	// }
+
+  temp_1Darray_row = (posy - 1)*SIZE + posx;
+  res  = input[temp_1Darray_row + 1] * operator[0][0];
+  res += input[temp_1Darray_row    ] * operator[0][1];
+  res += input[temp_1Darray_row - 1] * operator[0][2];
+
+  temp_1Darray_row += SIZE;
+  res += input[temp_1Darray_row + 1] * operator[1][0];
+  res += input[temp_1Darray_row    ] * operator[1][1];
+  res += input[temp_1Darray_row - 1] * operator[1][2];
+
+  temp_1Darray_row += SIZE;
+  res += input[temp_1Darray_row + 1] * operator[2][0];
+  res += input[temp_1Darray_row    ] * operator[2][1];
+  res += input[temp_1Darray_row - 1] * operator[2][2];
+
+
 	return(res);
 }
 
