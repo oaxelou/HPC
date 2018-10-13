@@ -136,28 +136,29 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
     /* Apply the sobel filter and calculate the magnitude *
      * of the derivative.								  */
 
-     // *************** HORIZONTAL ***********************
+     // *************** HORIZONTAL & VERTICAL ***********************
     temp_1D_input_row = (i - 1)*SIZE + j;
     convol_horiz  = 0 - input[temp_1D_input_row + 1];
     convol_horiz += input[temp_1D_input_row - 1];
 
-    temp_1D_input_row += SIZE;
-    convol_horiz -= input[temp_1D_input_row + 1] << 1;
-    convol_horiz += input[temp_1D_input_row - 1] << 1;
-
-    temp_1D_input_row += SIZE;
-    convol_horiz -= input[temp_1D_input_row + 1];
-    convol_horiz += input[temp_1D_input_row - 1];
-    // *************** VERTICAL ***********************
-    temp_1D_input_row = (i - 1)*SIZE + j;
     convol_vert  = input[temp_1D_input_row + 1];
     convol_vert += input[temp_1D_input_row    ] << 1;
     convol_vert += input[temp_1D_input_row - 1];
 
-    temp_1D_input_row += SIZE << 1;
+    // Next row
+    temp_1D_input_row += SIZE;
+    convol_horiz -= input[temp_1D_input_row + 1] << 1;
+    convol_horiz += input[temp_1D_input_row - 1] << 1;
+
+    // Next row
+    temp_1D_input_row += SIZE;
+    convol_horiz -= input[temp_1D_input_row + 1];
+    convol_horiz += input[temp_1D_input_row - 1];
+
     convol_vert -= input[temp_1D_input_row + 1];
     convol_vert -= input[temp_1D_input_row    ] << 1;
     convol_vert -= input[temp_1D_input_row - 1];
+
     p = convol_horiz * convol_horiz + convol_vert * convol_vert;
     res = (int)sqrt(p);
     /* If the resulting value is greater than 255, clip it *

@@ -14,7 +14,7 @@ CFLAGS = -Wall -O0
 LDFLAGS = -lm
 
 ### MY FLAG: name of time output file
-OUTFILE = 5_loop_fusion_O0.txt
+OUTFILE = 6_Common_Subexpression_Elim_O0.txt
 
 # make all will create all executables
 all: $(EXECUTABLES)
