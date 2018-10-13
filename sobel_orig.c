@@ -41,12 +41,14 @@ unsigned char input[SIZE*SIZE], output[SIZE*SIZE], golden[SIZE*SIZE];
  * value is the convolution of the operator with the neighboring pixels of the*
  * pixel we process.														  */
 int convolution2D(int posy, int posx, const unsigned char *input, char operator[][3]) {
-	int i, j, res;
+  int temp_1Darray_row;
+  int i, j, res;
 
 	res = 0;
   for (i = -1; i <= 1; i++) {
-	   for (j = -1; j <= 1; j++) {
-			res += input[(posy + i)*SIZE + posx + j] * operator[i+1][j+1];
+	   temp_1Darray_row = (posy + i)*SIZE + posx;
+     for (j = -1; j <= 1; j++) {
+			res += input[temp_1Darray_row + j] * operator[i+1][j+1];
 		}
 	}
 	return(res);
@@ -107,27 +109,31 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	/* This is the main computation. Get the starting time. */
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tv1);
 	/* For each pixel of the output image */
+
+  int temp_1Darray_row;
   for (i=1; i<SIZE-1; i+=1 ) {
-	   for (j=1; j<SIZE-1; j+=1) {
-			/* Apply the sobel filter and calculate the magnitude *
-			 * of the derivative.								  */
-			p = pow(convolution2D(i, j, input, horiz_operator), 2) +
-				pow(convolution2D(i, j, input, vert_operator), 2);
-			res = (int)sqrt(p);
-			/* If the resulting value is greater than 255, clip it *
-			 * to 255.											   */
-			if (res > 255)
-				output[i*SIZE + j] = 255;
-			else
-				output[i*SIZE + j] = (unsigned char)res;
-		}
+    temp_1Darray_row = i * SIZE;
+    for (j=1; j<SIZE-1; j+=1) {
+    /* Apply the sobel filter and calculate the magnitude *
+     * of the derivative.								  */
+    p = pow(convolution2D(i, j, input, horiz_operator), 2) +
+    	pow(convolution2D(i, j, input, vert_operator), 2);
+    res = (int)sqrt(p);
+    /* If the resulting value is greater than 255, clip it *
+     * to 255.											   */
+    if (res > 255)
+    	output[temp_1Darray_row + j] = 255;
+    else
+    	output[temp_1Darray_row + j] = (unsigned char)res;
+    }
 	}
 
 	/* Now run through the output and the golden output to calculate *
 	 * the MSE and then the PSNR.									 */
 	for (i=1; i<SIZE-1; i++) {
+    temp_1Darray_row = i * SIZE;
 		for ( j=1; j<SIZE-1; j++ ) {
-			t = pow((output[i*SIZE+j] - golden[i*SIZE+j]),2);
+			t = pow((output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]),2);
 			PSNR += t;
 		}
 	}
