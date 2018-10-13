@@ -166,17 +166,10 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
     	output[temp_1Darray_row + j] = 255;
     else
     	output[temp_1Darray_row + j] = (unsigned char)res;
-    }
-	}
 
-	/* Now run through the output and the golden output to calculate *
-	 * the MSE and then the PSNR.									 */
-	for (i=1; i<SIZE-1; i++) {
-    temp_1Darray_row = i * SIZE;
-		for ( j=1; j<SIZE-1; j++ ) {
-			t = pow((output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]),2);
-			PSNR += t;
-		}
+		t = pow((output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]),2);
+		PSNR += t;
+    }
 	}
 
 	PSNR /= (double)(SIZE*SIZE);
