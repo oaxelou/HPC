@@ -128,13 +128,37 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	/* For each pixel of the output image */
 
   int temp_1Darray_row;
+  int temp_1D_input_row, convol_horiz, convol_vert;
+  temp_1Darray_row = 0;
   for (i=1; i<SIZE-1; i+=1 ) {
-    temp_1Darray_row = i * SIZE;
+    temp_1Darray_row += SIZE;
     for (j=1; j<SIZE-1; j+=1) {
     /* Apply the sobel filter and calculate the magnitude *
      * of the derivative.								  */
-    p = pow(convolution2D(i, j, input, horiz_operator), 2) +
-    	pow(convolution2D(i, j, input, vert_operator), 2);
+
+     // *************** HORIZONTAL ***********************
+    temp_1D_input_row = (i - 1)*SIZE + j;
+    convol_horiz  = 0 - input[temp_1D_input_row + 1];
+    convol_horiz += input[temp_1D_input_row - 1];
+
+    temp_1D_input_row += SIZE;
+    convol_horiz -= input[temp_1D_input_row + 1] << 1;
+    convol_horiz += input[temp_1D_input_row - 1] << 1;
+
+    temp_1D_input_row += SIZE;
+    convol_horiz -= input[temp_1D_input_row + 1];
+    convol_horiz += input[temp_1D_input_row - 1];
+    // *************** VERTICAL ***********************
+    temp_1D_input_row = (i - 1)*SIZE + j;
+    convol_vert  = input[temp_1D_input_row + 1];
+    convol_vert += input[temp_1D_input_row    ] << 1;
+    convol_vert += input[temp_1D_input_row - 1];
+
+    temp_1D_input_row += SIZE << 1;
+    convol_vert -= input[temp_1D_input_row + 1];
+    convol_vert -= input[temp_1D_input_row    ] << 1;
+    convol_vert -= input[temp_1D_input_row - 1];
+    p = pow(convol_horiz, 2) + pow(convol_vert, 2);
     res = (int)sqrt(p);
     /* If the resulting value is greater than 255, clip it *
      * to 255.											   */
