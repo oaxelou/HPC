@@ -104,6 +104,8 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	fclose(f_in);
 	fclose(f_golden);
 
+  int k,m, convol_horiz, convol_vert;
+
 	/* This is the main computation. Get the starting time. */
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tv1);
 	/* For each pixel of the output image */
@@ -111,8 +113,23 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
 	   for (j=1; j<SIZE-1; j+=1) {
 			/* Apply the sobel filter and calculate the magnitude *
 			 * of the derivative.								  */
-			p = pow(convolution2D(i, j, input, horiz_operator), 2) +
-				pow(convolution2D(i, j, input, vert_operator), 2);
+
+     convol_horiz = 0;
+     for(k = -1; k <= 1; k++){
+       for(m = -1; m <= 1; m++){
+         convol_horiz += input[(i + k)*SIZE + j + m] * horiz_operator[k+1][m+1];
+       }
+     }
+
+     convol_vert = 0;
+     for(k = -1; k <= 1; k++){
+       for(m = -1; m <= 1; m++){
+         convol_vert += input[(i + k)*SIZE + j + m] * vert_operator[k+1][m+1];
+       }
+     }
+
+     p = pow(convol_horiz, 2) + pow(convol_vert, 2);
+
 			res = (int)sqrt(p);
 			/* If the resulting value is greater than 255, clip it *
 			 * to 255.											   */

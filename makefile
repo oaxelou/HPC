@@ -14,7 +14,7 @@ CFLAGS = -Wall -O0
 LDFLAGS = -lm
 
 ### MY FLAG: name of time output file
-OUTFILE = 1_loop_interchange_O0.txt
+OUTFILE = 2_function_inlining_O0.txt
 
 # make all will create all executables
 all: $(EXECUTABLES)
