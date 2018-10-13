@@ -158,7 +158,7 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
     convol_vert -= input[temp_1D_input_row + 1];
     convol_vert -= input[temp_1D_input_row    ] << 1;
     convol_vert -= input[temp_1D_input_row - 1];
-    p = pow(convol_horiz, 2) + pow(convol_vert, 2);
+    p = convol_horiz * convol_horiz + convol_vert * convol_vert;
     res = (int)sqrt(p);
     /* If the resulting value is greater than 255, clip it *
      * to 255.											   */
@@ -169,12 +169,12 @@ double sobel(unsigned char *input, unsigned char *output, unsigned char *golden)
     }
 	}
 
-	/* Now run through the output and the golden output to calculate *
+  /* Now run through the output and the golden output to calculate *
 	 * the MSE and then the PSNR.									 */
 	for (i=1; i<SIZE-1; i++) {
     temp_1Darray_row = i * SIZE;
 		for ( j=1; j<SIZE-1; j++ ) {
-			t = pow((output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]),2);
+      t = (output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]) * (output[temp_1Darray_row+j] - golden[temp_1Darray_row+j]);
 			PSNR += t;
 		}
 	}
