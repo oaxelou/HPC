@@ -1,0 +1,10 @@
+  294  nvcc -O4 -D_FORCE_INLINES -arch sm_30 -lineinfo -Xcompiler -Wall -lm -g Convolution2D.cu -o Convolution2D.out
+  295  ./Convolution2D.out 
+  296  nvcc -O4 -D_FORCE_INLINES -arch sm_30 -lineinfo -Xcompiler -Wall Convolution2D.cu -o Convolution2D.out
+  297  nvcc -O4 --generate-code arch=compute_30,code=sm_30 -D_FORCE_INLINES -lineinfo -Xcompiler -Wall Convolution2D.cu -o Convolution2D.out
+  298  ./Convolution2D.out 
+  299  nvcc -O4 --generate-code arch=compute_30,code=sm_30 -D_FORCE_INLINES -lineinfo -Xcompiler -Wall Convolution2D.cu -o Convolution2D.out
+  300  ./Convolution2D.out 
+  301  nvcc -O4 -D_FORCE_INLINES -lineinfo -Xcompiler -Wall Convolution2D.cu -o Convolution2D.out
+  302  ./Convolution2D.out 
+  303  history | tail > nvcc_flags.txt
