@@ -70,7 +70,10 @@ void convolutionColumnCPU(float *h_Dst, float *h_Src, float *h_Filter,
 
 }
 
-__global__ void kernel(const float *filter, const float *input, float *output){
+
+// ********************** G P U ***********************************************
+__global__ void kernel_rows(const float *filter, const float *input, float *output,
+                       int imageW, int imageH, int filterR){
   int idx_x = threadIdx.x + blockDim.x * blockIdx.x;
   int idx_y = threadIdx.y + blockDim.y * blockIdx.y;
 
@@ -80,7 +83,78 @@ __global__ void kernel(const float *filter, const float *input, float *output){
   // printf("I am: idx_y %d + %d * %d = %d / idx_x %d + %d * %d = %d. Generally: %d\n",
   // threadIdx.y, blockDim.y, blockIdx.y, idx_y,
   // threadIdx.x, blockDim.x, blockIdx.x, idx_x, idx);
-  output[idx] = input[idx] + 1;
+
+  // output[idx] = input[idx] + 1;
+
+  // The real code begins here!
+  if(idx_x >= imageW || idx_y >= imageH){
+    printf("y:%d,x:%d OUT OF BOUNDS\n", idx_y,idx_x);
+    return;
+  }
+
+  // printf("Filter radius: %d\n", filterR);
+  float sum = 0;
+  int k;
+
+  // Rows
+  for(k = -filterR; k <= filterR; k++){
+    int d = idx_x + k;
+
+    if(d >= 0 && d < imageW){
+      sum += input[idx_y * imageW + d] * filter[filterR - k];
+    }
+  }
+
+  output[idx] = sum;
+}
+
+__global__ void kernel_columns(const float *filter, const float *buffer, float *output,
+                       int imageW, int imageH, int filterR){
+  int idx_x = threadIdx.x + blockDim.x * blockIdx.x;
+  int idx_y = threadIdx.y + blockDim.y * blockIdx.y;
+
+  int grid_width = gridDim.x * blockDim.x;
+  int idx = grid_width * idx_y + idx_x;
+
+  // printf("I am: idx_y %d + %d * %d = %d / idx_x %d + %d * %d = %d. Generally: %d\n",
+  // threadIdx.y, blockDim.y, blockIdx.y, idx_y,
+  // threadIdx.x, blockDim.x, blockIdx.x, idx_x, idx);
+
+  // output[idx] = buffer[idx] + 1;
+
+  // The real code begins here!
+  if(idx_x >= imageW || idx_y >= imageH){
+    printf("y:%d,x:%d OUT OF BOUNDS\n", idx_y,idx_x);
+    return;
+  }
+
+  // printf("Filter radius: %d\n", filterR);
+  float sum = 0;
+  int k;
+
+  // Columns
+  for(k = -filterR; k <= filterR; k++){
+    int d = idx_y + k;
+
+    if(d >= 0 && imageH){
+      sum += buffer[d * imageW + idx_x] * filter[filterR - k];
+    }
+  }
+
+  output[idx] = sum;
+}
+
+void cudaCheckForErrors(){
+  cudaError_t error = cudaGetLastError();
+  if(error != cudaSuccess)
+  {
+    // something's gone wrong
+    // print out the CUDA error as a string
+    printf("CUDA Error: %s\n", cudaGetErrorString(error));
+
+    // we can't recover from the error -- exit the program
+    exit(1);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +169,7 @@ int main(void) {
     *h_OutputCPU;
 
     // GPU
-    float *d_Filter, *d_Input, *d_OutputGPU, *h_OutputGPU;
+    float *d_Filter, *d_Input, *d_Buffer, *d_OutputGPU, *h_OutputGPU;
 
     int imageW;
     int imageH;
@@ -124,10 +198,11 @@ int main(void) {
 
     cudaMalloc( (void **) &d_Filter,      FILTER_LENGTH * sizeof(float));
     cudaMalloc( (void **) &d_Input,     imageW * imageH * sizeof(float));
+    cudaMalloc( (void **) &d_Buffer,     imageW * imageH * sizeof(float));
     cudaMalloc( (void **) &d_OutputGPU, imageW * imageH * sizeof(float));
 
     if(!h_Filter || !h_Input || !h_Buffer || !h_OutputCPU ||
-       !d_Filter || !d_Input || !d_OutputGPU || !h_OutputGPU){
+       !d_Filter || !d_Input || !d_Buffer || !d_OutputGPU || !h_OutputGPU){
       printf("Error allocating memory.\n");
       exit(1);
     }
@@ -159,12 +234,12 @@ int main(void) {
     convolutionRowCPU(h_Buffer, h_Input, h_Filter, imageW, imageH, filter_radius); // convolution kata grammes
     convolutionColumnCPU(h_OutputCPU, h_Buffer, h_Filter, imageW, imageH, filter_radius); // convolution kata sthles
 
-    // printf("Results CPU:\n");
-    // for(int i = 0; i < imageH; i++){
-    //   for(int j = 0; j < imageW; j++)
-    //     printf("%g ", h_OutputCPU[i * imageW + j]);
-    //   printf("\n");
-    // }
+    printf("\nResults CPU:\n");
+    for(int i = 0; i < imageH; i++){
+      for(int j = 0; j < imageW; j++)
+        printf("%g ", h_OutputCPU[i * imageW + j]);
+      printf("\n");
+    }
 
     //******************* GPU ************************
     // grid_dim, block_dim
@@ -179,10 +254,19 @@ int main(void) {
 
     // if((imageW * imageH) % block_size) ++grid_size;  // xreiazetai ?!
 
-    kernel<<<grid_dim, block_dim>>>(d_Filter, d_Input, d_OutputGPU);
+    printf("\nGoing to compute convolution by rows\n");
+    kernel_rows<<<grid_dim, block_dim>>>(d_Filter, d_Input, d_Buffer, imageW, imageH, filter_radius);
+    cudaDeviceSynchronize();
+    cudaCheckForErrors();
+
+    printf("\nGoing to compute convolution by columns\n");
+    kernel_columns<<<grid_dim, block_dim>>>(d_Filter, d_Buffer, d_OutputGPU, imageW, imageH, filter_radius);
+    cudaDeviceSynchronize();
+    cudaCheckForErrors();
+
     cudaMemcpy(h_OutputGPU, d_OutputGPU, imageW * imageH * sizeof(float), cudaMemcpyDeviceToHost);
 
-    printf("Results GPU:\n");
+    printf("\nResults GPU:\n");
     for(int i = 0; i < imageH; i++){
       for(int j = 0; j < imageW; j++)
         printf("%g ", h_OutputGPU[i * imageW + j]);
@@ -194,12 +278,13 @@ int main(void) {
     // Kanete h sugrish anamesa se GPU kai CPU kai an estw kai kapoio apotelesma xeperna thn akriveia
     // pou exoume orisei, tote exoume sfalma kai mporoume endexomenws na termatisoume to programma mas
 
-    // for(int i = 0; i < imageH * imageW; i++){
-    //   if(ABS(h_OutputGPU[i] - h_OutputCPU[i]) >= accuracy){
-    //     printf("ERROR with CUDA. Something went wrong.\n");
-    //     break;
-    //   }
-    // }
+    for(int i = 0; i < imageH * imageW; i++){
+      if(ABS(h_OutputGPU[i] - h_OutputCPU[i]) >= accuracy){
+        printf("[%d][%d]ERROR with CUDA( %f & %f). Something went wrong.\n",
+        i / imageW, i % imageW, h_OutputGPU[i], h_OutputCPU[i]);
+        // break;
+      }
+    }
 
     //********** CPU *************
     // free all the allocated memory
@@ -212,6 +297,7 @@ int main(void) {
     free(h_OutputGPU);
     cudaFree(d_Filter);
     cudaFree(d_Input);
+    cudaFree(d_Buffer);
     cudaFree(d_OutputGPU);
 
     // Do a device reset just in case... Bgalte to sxolio otan ylopoihsete CUDA
