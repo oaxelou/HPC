@@ -1,0 +1,35 @@
+
+
+
+POREIA:
+1) Piga na metatrepsw ton kwdika me to padding se doubles alla apotuxia!
+Vgainei xeiroteros o xronos. Opote, lew na krathsw ton kwdika apo to 6.
+(profanws kai den tha petaksw ton tropopoihmeno kwdika)
+2) Twra allaksa ton kwdika apo to 6 wste na ta pernaei se shared mem to
+filtro. Gia na leitourghsei xwris kamia megalh kathusterhsh, kanw padding
+to d_Filter wste na einai pollaplasio tou blockDim. Etsi, kathe thread
+fernei sth __shared__ mnhmh osa stoixeia tou filter tou antistoixoun.
+  Note: De xreiasthke kamia paradoxh.
+3) Epomeno vhma: Dokimase na valeis sthn texture mnhmh to input.
+
+
+
+
+
+Ti prepei na kaneis se oles tis ekdoseis (twra eimai sto input_shared):
+1) Na allakseis thn arxikopoihsh tou h_Buffer wste na ginetai me 0 pantou
+   (autos einai o logos pou evgaze lathos apotelesmata)
+
+
+
+
+
+OPTIMIZATIONS:	
+1) Input & Buffer matrices to shared memory
+2) Filter to constant memory
+3) Padding in filter (constant memory)
+4) Padding in input (shared memory) FAILED
+5) Fixed thread position in a register for simple access without
+computations FAILED
+6) Unroll pragma
+
